@@ -1,0 +1,148 @@
+<html>
+
+<body>
+    <meta name="viewport" content="width=device-width" />
+    <style>
+        body {
+                margin: 0;
+            }
+
+            .main {
+                width: 320px;
+                height: 326px;
+                margin: 10px auto;
+                text-align: center;
+                border: 1px solid hotpink;
+                background-color: rgb(255,105,180, 0.2);
+            }
+
+            button {
+                margin: 10px;
+            }
+
+            button:disabled {
+                font-style: oblique;
+            }
+
+            .status {
+                font-size: 12px;
+                font-family: monospace, monospace;
+            }
+
+            .status div {
+                display: inline-block;
+                padding: 0 10px;
+            }
+
+            .status span::before {
+                color: red;
+                content: "false";
+            }
+
+            .status span.true::before {
+                color: green;
+                content: "true\00a0";
+            }
+        </style>
+    <script type="text/javascript" src="https://connect.facebook.net/en_US/fbadnw60-tag.js" async></script>
+    <script>
+        window.ADNW = window.ADNW || {};
+        window.ADNW.v60 = window.ADNW.v60 || {};
+        window.ADNW.v60.slots = window.ADNW.v60.slots || [];
+    </script>
+
+    <script>
+        window.showAdCb = function () { };
+
+        function disableShowButton() {
+            var showButton = document.getElementById('showButton');
+            showButton.disabled = true;
+        }
+
+        function enableShowButton() {
+            var showButton = document.getElementById('showButton');
+            showButton.disabled = false;
+        }
+
+        function removeAllAds() {
+            var adSpace = document.getElementById('adSpace');
+            adSpace.style.display = 'none';
+            while (adSpace.firstChild) {
+                adSpace.removeChild(adSpace.firstChild);
+            }
+
+            var statuses = document.querySelectorAll('.status span');
+            for (i = 0; i < statuses.length; i++) {
+                setStatus(statuses[i].id);
+                statuses[i].classList.remove('true');
+            }
+        }
+
+        function setStatus(statusName, value) {
+            var elem = document.getElementById(statusName);
+            if (value) {
+                elem.classList.add('true');
+            } else {
+                elem.classList.remove('true');
+            }
+        }
+
+        function preloadAd() {
+            console.log('requesting ad...');
+            removeAllAds();
+
+            var adSpace = document.getElementById('adSpace');
+            disableShowButton();
+
+            var wrapper = document.createElement('div');
+            adSpace.appendChild(wrapper);
+
+            requestAd('300x250', '1857062041195879_2230457763856303', wrapper);
+        }
+
+        function requestAd(format, placement_id, root) {
+            window.ADNW.v60.slots.push({
+                rootElement: root,
+                placementid: placement_id,
+                format: format,
+                testmode: false,
+                onAdLoaded: function (element) {
+                    element.style.display = 'block';
+                    console.log('Audience Network [' + placement_id + '] ad loaded');
+                    setStatus('adLoaded', true);
+                },
+                onAdError: function (errorCode, errorMessage) {
+                    console.log('Audience Network [' + placement_id + '] error (' + errorCode + ') ' + errorMessage);
+                    setStatus('errorMsg', true);
+                },
+                onMediaLoaded: function (element, showAdCb) {
+                    console.log('media loaded');
+                    enableShowButton();
+                    setStatus('mediaLoaded', true);
+                    window.showAdCb = showAdCb;
+                }
+            });
+        }
+
+        function showAd() {
+            var adSpace = document.getElementById('adSpace');
+            disableShowButton();
+            adSpace.style.display = 'block';
+            window.showAdCb();
+        }
+    </script>
+    <div class="main">
+        <div class="buttons">
+            <button onclick="preloadAd()">Load Ad</button>
+            <button onclick="showAd()" id="showButton" disabled={true}>Show Ad</button>
+        </div>
+        <div class="status">
+            <div>Ad Loaded: <span id="adLoaded"></span></div>
+            <div>Media Loaded: <span id="mediaLoaded"></span></div>
+            <div>Error: <span id="errorMsg"></span></div>
+        </div>
+        <div id="adSpace" style="display:none"></div>
+    </div>
+</body>
+
+</html>
